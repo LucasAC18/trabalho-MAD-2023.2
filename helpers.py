@@ -2,6 +2,7 @@
 
 from numpy.random import poisson, exponential
 import math
+import matplotlib.pyplot as plt
 
 # main class for implementing the event queue
 # events are represented by a tuple => (type, event_time)
@@ -27,7 +28,7 @@ class Queue():
 # class to store the metrics obtained from the simulation
 class Statistics():
 
-  def __init__(self, mcpr, mwtpr, mestpr, fthepr):
+  def __init__(self, mcpr, mwtpr, mestpr, fthepr, std, pr):
     self.mean_customers_per_round = mcpr
     self.mean_customers_in_system = sum(mcpr)/len(mcpr)
     self.mean_customers_interval = self.get_confidence_interval(self.mean_customers_per_round, self.mean_customers_in_system, len(mcpr))
@@ -44,6 +45,11 @@ class Statistics():
     self.fraction_times_hit_empty_in_system = sum(fthepr)/len(fthepr)
     self.fraction_times_hit_empty_interval = self.get_confidence_interval(self.fraction_times_hit_empty_per_round, self.fraction_times_hit_empty_in_system, len(fthepr))
 
+    self.state_time_distribution = std
+    self.customer_cdf = self.generate_customer_CDF()
+
+    self.probability_ruin = pr
+
   def get_confidence_interval(self, metric_per_round, metric_mean, N):
     sd = [(val-metric_mean)**2 for val in metric_per_round]
     sd = sum(sd)/max((N-1),1)
@@ -51,11 +57,27 @@ class Statistics():
 
     return [metric_mean-1.96*sd/math.sqrt(N),metric_mean+1.96*sd/math.sqrt(N)]
   
+  def generate_customer_CDF(self):
+    # Normalize the state times
+    total_time_recorded = sum(self.state_time_distribution.values())
+    state_probabilities = {k: v / total_time_recorded for k, v in self.state_time_distribution.items()}
+
+    # Calculate the CDF
+    cdf = {}
+    cumulative_probability = 0
+
+    for state in sorted(state_probabilities.keys()):
+      cumulative_probability += state_probabilities[state]
+      cdf[state] = cumulative_probability
+
+    return cdf
+  
   def __str__(self):
     return f'Mean customers in system    => {self.mean_customers_in_system}\nConfidence Interval         => {self.mean_customers_interval}\n\n' + \
            f'Mean wait time in system    => {self.mean_wait_time_in_system}\nConfidence Interval         => {self.mean_wait_time_interval}\n\n' + \
            f'Mean 0 state time in system => {self.mean_empty_state_time_in_system}\nConfidence Interval         => {self.mean_empty_state_interval}\n\n' + \
-           f'Fraction of times 0 state   => {self.fraction_times_hit_empty_in_system}\nConfidence Interval         => {self.fraction_times_hit_empty_interval}\n'
+           f'Fraction of times 0 state   => {self.fraction_times_hit_empty_in_system}\nConfidence Interval         => {self.fraction_times_hit_empty_interval}\n\n' + \
+           f'Probability of ruin         => {self.probability_ruin}\n'
 
 # event types constants
 TYPES = ["Arrival", "Departure"]
@@ -72,3 +94,28 @@ def littles_law(_lambda, _mu):
   rho = _lambda/_mu
 
   return rho/(1-rho)
+
+def probability_ruin(_lambda, _mu, n, k = 1):
+  p = _lambda/(_lambda + _mu)
+  q = _mu/(_lambda + _mu)
+
+  if n <= 0:
+    return "Infinite Queue"
+
+  if _lambda == _mu:
+    return (n - k)/k
+  else:
+    return 1 - (1 - (q/p)**k)/(1 - (q/p)**n)
+
+def plot_customer_cdf(cdf):
+  # CDF values from the simulation
+  cdf_values = list(cdf.values())
+  cdf_states = list(cdf.keys())
+
+  # Plot the CDF
+  plt.step(cdf_states, cdf_values, where='post')
+  plt.xlabel('Number of Customers')
+  plt.ylabel('CDF')
+  plt.title('CDF of M/M/1 Queue')
+  plt.grid(True)
+  plt.show()
