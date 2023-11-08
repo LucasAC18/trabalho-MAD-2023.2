@@ -33,7 +33,7 @@ class Node():
   def append_child(self, child):
     self.childs.append(child)
 
-  def get_childs(self):
+  def get_children(self):
     return self.childs
 
 # class for representing the tree 
@@ -62,6 +62,31 @@ class Tree():
     else:
       self.current = self.order.pop(0)
 
+  def child_count_per_node(self, node):
+    child_count = [len(node.get_children())]
+
+    for child in node.get_children():
+      child_count += self.child_count_per_node(child)
+
+    return child_count
+  
+  def get_child_count(self):
+    return self.child_count_per_node(self.root)
+
+# def show_node(node):
+#   if node == None:
+#     return
+
+#   print(node.value)
+
+#   for child in node.get_children():
+#     show_node(child)
+
+#   return
+
+# def show_tree(tree):
+#   root = tree.root
+#   show_node(root)
 
 # event types constants
 TYPES = ["Arrival", "Departure"]
@@ -70,5 +95,5 @@ TYPES = ["Arrival", "Departure"]
 def arrival_dist(_lambda):
   return exponential(1/_lambda)
 
-def departure_dist(_mu):
-  return exponential(1/_mu)
+def departure_dist(_mu, deterministic=False):
+  return _mu if deterministic else exponential(1/_mu)
