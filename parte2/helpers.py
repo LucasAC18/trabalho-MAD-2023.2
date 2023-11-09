@@ -72,21 +72,24 @@ class Tree():
   
   def get_child_count(self):
     return self.child_count_per_node(self.root)
+  
+  def node_height(self, node):
+    if len(node.get_children()) == 0:
+      return 0
 
-# def show_node(node):
-#   if node == None:
-#     return
+    height = max([self.node_height(child) for child in node.get_children()])
+    return height + 1
+  
+  def height_per_node(self, node):
+    height_count = [self.node_height(node)]
 
-#   print(node.value)
+    for child in node.get_children():
+      height_count += self.height_per_node(child)
 
-#   for child in node.get_children():
-#     show_node(child)
+    return height_count
 
-#   return
-
-# def show_tree(tree):
-#   root = tree.root
-#   show_node(root)
+  def get_height(self):
+    return self.height_per_node(self.root)
 
 # event types constants
 TYPES = ["Arrival", "Departure"]
