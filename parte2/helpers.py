@@ -90,6 +90,12 @@ class Tree():
 
   def get_height(self):
     return self.height_per_node(self.root)
+  
+  def get_root_outdegree(self):
+    return self.get_child_count()[0]
+  
+  def get_max_outdegree(self):
+    return max(self.get_child_count())
 
 # event types constants
 TYPES = ["Arrival", "Departure"]
