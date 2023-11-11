@@ -1,6 +1,7 @@
 # Classes and functions created to help the simulation are defined here
 
 from numpy.random import exponential
+import math
 
 # main class for implementing the event queue
 # events are represented by a tuple => (type, event_time)
@@ -45,6 +46,7 @@ class Tree():
     self.root = Node(self.num_nodes)
     self.order = []
     self.current = self.root
+    self.is_finite = False
 
   def create_node(self):
     self.num_nodes += 1
@@ -96,6 +98,14 @@ class Tree():
   
   def get_max_outdegree(self):
     return max(self.get_child_count())
+  
+def get_confidence_interval(metric_per_round, N):
+    metric_mean = sum(metric_per_round)/max(N,1)
+    sd = [(val-metric_mean)**2 for val in metric_per_round]
+    sd = sum(sd)/max((N-1),1)
+    sd = math.sqrt(sd)
+
+    return [metric_mean-1.96*sd/math.sqrt(N),metric_mean+1.96*sd/math.sqrt(N)]
 
 # event types constants
 TYPES = ["Arrival", "Departure"]
